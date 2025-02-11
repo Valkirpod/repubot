@@ -118,7 +118,10 @@ async def rep_min(interaction: discord.Interaction, user: discord.User, comment:
 
 @bot.tree.command(name="rep_show", description="See all reputation comments for a user.")
 @discord.app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-async def rep(interaction: discord.Interaction, user: discord.User):
+async def rep(interaction: discord.Interaction, user: discord.User = None):
+    if user is None:
+        user = interaction.user
+    
     file_path = f"user_data/{user.id}.json"
     
     # Check if the user has a data file
