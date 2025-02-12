@@ -205,6 +205,7 @@ async def rep(interaction: discord.Interaction, user: discord.User = None):
 @bot.tree.command(name="leaderboard", description="See the top users with the highest reputation.")
 @discord.app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 async def rep_leaderboard(interaction: discord.Interaction):
+    await interaction.response.defer()
     user_data_folder = "user_data/"
     leaderboard = []
 
@@ -240,19 +241,6 @@ async def rep_leaderboard(interaction: discord.Interaction):
         view.message = await interaction.response.send_message(embed=embeds[0], view=view)
     else:
         await interaction.response.send_message("No reputation data available.")
-
-
-    # embed = discord.Embed(title="🏆 Reputation Leaderboard 🏆", color=discord.Color.gold())
-    
-    # if not leaderboard:
-    #     embed.description = "No users have a reputation yet!"
-    # else:
-    #     for rank, (user_id, rep) in enumerate(leaderboard[:10], start=1):
-    #         user = await bot.fetch_user(user_id)
-    #         username = user.name if user else f"{user.name} ({user_id})"
-    #         embed.add_field(name=f"#{rank} {username}", value=f"{rep} **rep**", inline=False)
-
-    await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name="rep_delete", description="Delete a specific reputation comment by its ID.")
 @discord.app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
