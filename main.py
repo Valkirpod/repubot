@@ -96,7 +96,7 @@ async def rep_plus(interaction: discord.Interaction, user: discord.User, comment
     else:
         user_data = {"comments": [], "reputation": 0}
     
-    user_data["comments"].append({"comment": comment, "type": "positive"})
+    user_data["comments"].append({"comment": comment, "type": 1, "author": user.name})
     user_data["reputation"] += 1
     
     with open(file_path, "w") as f:
@@ -125,7 +125,7 @@ async def rep_min(interaction: discord.Interaction, user: discord.User, comment:
     else:
         user_data = {"comments": [], "reputation": 0}
     
-    user_data["comments"].append({"comment": comment, "type": "negative"})
+    user_data["comments"].append({"comment": comment, "type": 0, "author": user.name})
     user_data["reputation"] -= 1
     
     with open(file_path, "w") as f:
@@ -167,9 +167,9 @@ async def rep(interaction: discord.Interaction, user: discord.User = None):
             i += 1
             comment = entry.get("comment")
             comid = i
-            if entry.get("type") == "positive":
+            if entry.get("type") == 1:
                 comments.append(f"[{comid}]🟢 {comment}")
-            elif entry.get("type") == "negative":
+            elif entry.get("type") == 0:
                 comments.append(f"[{comid}]🔴 {comment}")
         comments.reverse()
         
