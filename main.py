@@ -96,7 +96,7 @@ async def rep_plus(interaction: discord.Interaction, user: discord.User, comment
     else:
         user_data = {"comments": [], "reputation": 0}
     
-    user_data["comments"].append({"comment": comment, "type": 1, "author": user.name})
+    user_data["comments"].append({"comment": comment, "type": 1, "author": interaction.user.name})
     user_data["reputation"] += 1
     
     with open(file_path, "w") as f:
@@ -125,7 +125,7 @@ async def rep_min(interaction: discord.Interaction, user: discord.User, comment:
     else:
         user_data = {"comments": [], "reputation": 0}
     
-    user_data["comments"].append({"comment": comment, "type": 0, "author": user.name})
+    user_data["comments"].append({"comment": comment, "type": 0, "author": interaction.user.name})
     user_data["reputation"] -= 1
     
     with open(file_path, "w") as f:
