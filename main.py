@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-#from dotenv import load_dotenv
 import json
 import os
 from discord import ui
@@ -17,9 +16,6 @@ bot = commands.Bot(command_prefix="/", intents=discord.Intents.default())
 
 if not os.path.exists("user_data"):
     os.makedirs("user_data")
-
-#load_dotenv()
-# for local :(
 
 #
 
@@ -205,7 +201,6 @@ async def rep(interaction: discord.Interaction, user: discord.User = None):
 @bot.tree.command(name="leaderboard", description="See the top users with the highest reputation.")
 @discord.app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 async def rep_leaderboard(interaction: discord.Interaction):
-    await interaction.response.defer()
     user_data_folder = "user_data/"
     leaderboard = []
 
