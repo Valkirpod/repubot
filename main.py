@@ -200,7 +200,7 @@ async def rep(interaction: discord.Interaction, user: discord.User = None):
 
 @bot.tree.command(name="leaderboard", description="See the top users with the highest reputation.")
 @discord.app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-async def rep_leaderboard(interaction: discord.Interaction):
+async def rep_leaderboard(interaction: discord.Interaction, show_ids: bool = False):
     await interaction.response.defer()
     user_data_folder = "user_data/"
     leaderboard = []
@@ -226,8 +226,10 @@ async def rep_leaderboard(interaction: discord.Interaction):
         for rank, (user_id, rep) in enumerate(leaderboard[i:i + per_page], start=i + 1):
             user = await bot.fetch_user(user_id)
 
-            embed.add_field(name=f"#{rank} {user.name}", value=f"{rep} rep", inline=False)
-            #embed.add_field(name=f"#{rank} {user.name}", value=f"{rep} rep\n`{user_id}`", inline=False)
+            if show_ids:
+                embed.add_field(name=f"#{rank} {user.name}", value=f"{rep} rep\n`{user_id}`", inline=False)
+            else:
+                embed.add_field(name=f"#{rank} {user.name}", value=f"{rep} rep", inline=False)
 
         embed.set_footer(text=f"Page {i // per_page + 1}/{(len(leaderboard) - 1) // per_page + 1}")
         embeds.append(embed)
