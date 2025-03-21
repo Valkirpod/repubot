@@ -10,6 +10,11 @@ from discord import ButtonStyle
 from discord.app_commands import CommandOnCooldown
 from datetime import datetime, timedelta
 
+import asyncio
+
+from dotenv import load_dotenv
+load_dotenv()
+
 rep_cooldowns = {}  # {user_id: timestamp}
 
 bot = commands.Bot(command_prefix="/", intents=discord.Intents.default())
@@ -17,7 +22,6 @@ bot = commands.Bot(command_prefix="/", intents=discord.Intents.default())
 if not os.path.exists("user_data"):
     os.makedirs("user_data")
 
-#
 
 class MyView(ui.View):
     @ui.button(label="Previous", style=ButtonStyle.primary)
@@ -70,7 +74,6 @@ class Paginator(View):
         self.previous_button.disabled = self.current_page == 0
         self.next_button.disabled = self.current_page == len(self.embeds) - 1
 
-#
 
 def check_rep_cooldown(user_id):
     """Returns True if the user is on cooldown, else False"""
@@ -198,10 +201,12 @@ async def rep(interaction: discord.Interaction, user: discord.User = None):
     else:
         await interaction.response.send_message(f"No reputation data found for {user.name}.")
 
-@bot.tree.command(name="leaderboard", description="See the top users with the highest reputation.")
-@discord.app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-async def rep_leaderboard(interaction: discord.Interaction, show_ids: bool = False):
-    await interaction.response.defer()
+async def leaderboard_data():
+    """Generates leaderboard embed once every 5 minutes.
+       The update status is set to True when the leaderboard is being updatedm, else False."""
+    global update_status
+    update_status = True
+
     user_data_folder = "user_data/"
     leaderboard = []
 
@@ -218,25 +223,45 @@ async def rep_leaderboard(interaction: discord.Interaction, show_ids: bool = Fal
 
     leaderboard.sort(key=lambda x: x[1], reverse=True)
 
-    embeds = []
+    global embeds, embeds_with_ids
+    embeds, embeds_with_ids = [], []
+
     per_page = 14
     for i in range(0, len(leaderboard), per_page):
         embed = discord.Embed(title="🏆 Reputation Leaderboard 🏆", color=discord.Color.gold())
+        embed_with_ids = discord.Embed(title="🏆 Reputation Leaderboard 🏆", color=discord.Color.gold())
 
         for rank, (user_id, rep) in enumerate(leaderboard[i:i + per_page], start=i + 1):
             user = await bot.fetch_user(user_id)
 
-            if show_ids:
-                embed.add_field(name=f"#{rank} {user.name}", value=f"{rep} rep\n`{user_id}`", inline=False)
-            else:
-                embed.add_field(name=f"#{rank} {user.name}", value=f"{rep} rep", inline=False)
+            embed_with_ids.add_field(name=f"#{rank} {user.name}", value=f"{rep} rep\n`{user_id}`", inline=False)
+            
+            embed.add_field(name=f"#{rank} {user.name}", value=f"{rep} rep", inline=False)
 
+        embed_with_ids.set_footer(text=f"Page {i // per_page + 1}/{(len(leaderboard) - 1) // per_page + 1}")
         embed.set_footer(text=f"Page {i // per_page + 1}/{(len(leaderboard) - 1) // per_page + 1}")
+
+        embeds_with_ids.append(embed_with_ids)
         embeds.append(embed)
 
+    global view, view_with_ids
+    view = Paginator(embeds)
+    view_with_ids = Paginator(embeds_with_ids)
+
+    update_status = False
+
+    await asyncio.sleep(300) # 5 minutes
+
+@bot.tree.command(name="leaderboard", description="See the top users with the highest reputation.")
+@discord.app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+async def rep_leaderboard(interaction: discord.Interaction, show_ids: bool = False):
+    await interaction.response.defer()
+
     if embeds:
-        view = Paginator(embeds)
-        view.message = await interaction.followup.send(embed=embeds[0], view=view)
+        if show_ids:
+            view_with_ids.message = await interaction.followup.send(embed=embeds_with_ids[0], view=view_with_ids)
+        else:
+            view.message = await interaction.followup.send(embed=embeds[0], view=view)
     else:
         await interaction.followup.send("No reputation data available.")
 
@@ -273,6 +298,7 @@ async def rep_delete(interaction: discord.Interaction, comment_id: int):
 @bot.event
 async def on_ready():
     await bot.tree.sync()
+    asyncio.create_task(leaderboard_data())
     print(f"Loaded")
 
 bot.run(os.getenv("DISCORD_BOT_TOKEN"))
