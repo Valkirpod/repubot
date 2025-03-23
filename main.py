@@ -308,7 +308,11 @@ async def rep_delete(interaction: discord.Interaction, comment_id: int):
 @bot.event
 async def on_ready():
     await bot.tree.sync()
-    asyncio.create_task(leaderboard_data())
-    print(f"Loaded")
+    bot.loop.create_task(update_leaderboard())
+    print("Loaded")
+
+async def update_leaderboard():
+     while True:
+          await leaderboard_data()
 
 bot.run(os.getenv("DISCORD_BOT_TOKEN"))
