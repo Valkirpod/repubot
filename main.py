@@ -36,36 +36,40 @@ class MyView(ui.View):
 
 class Paginator(View):
     def __init__(self, embeds):
-        super().__init__(timeout=60)
+        super().__init__(timeout=300)
         self.embeds = embeds
         self.current_page = 0
 
-        # Add buttons to the view
+        # Previous and Next Buttons
         self.previous_button = Button(label="Previous", style=ButtonStyle.primary)
         self.next_button = Button(label="Next", style=ButtonStyle.primary)
+        
+        # Assign callbacks
         self.previous_button.callback = self.previous_page
         self.next_button.callback = self.next_page
+        
+        # Add buttons to the view
         self.add_item(self.previous_button)
         self.add_item(self.next_button)
-
-        # Initial button state
+        
+        # Update the button state
         self.update_button_state()
 
-    async def previous_page(self, interaction: Interaction):
+    async def previous_page(self, interaction: discord.Interaction):
         if self.current_page > 0:
             self.current_page -= 1
             await self.update_message(interaction)
         else:
             await interaction.response.send_message("You're already on the first page.", ephemeral=True)
 
-    async def next_page(self, interaction: Interaction):
+    async def next_page(self, interaction: discord.Interaction):
         if self.current_page < len(self.embeds) - 1:
             self.current_page += 1
             await self.update_message(interaction)
         else:
             await interaction.response.send_message("You're already on the last page.", ephemeral=True)
 
-    async def update_message(self, interaction: Interaction):
+    async def update_message(self, interaction: discord.Interaction):
         embed = self.embeds[self.current_page]
         self.update_button_state()
         await interaction.response.edit_message(embed=embed, view=self)
@@ -74,6 +78,10 @@ class Paginator(View):
         self.previous_button.disabled = self.current_page == 0
         self.next_button.disabled = self.current_page == len(self.embeds) - 1
 
+    def reset(self):
+        self.previous_button.disabled = True
+        self.next_button.disabled = False
+        self.current_page = 0
 
 def check_rep_cooldown(user_id):
     """Returns True if the user is on cooldown, else False"""
@@ -171,9 +179,9 @@ async def rep(interaction: discord.Interaction, user: discord.User = None):
             comment = entry.get("comment")
             comid = i
             if entry.get("type") == 1:
-                comments.append(f"[{comid}]🟢 {comment}")
+                comments.append(f"[{comid}]ðŸŸ¢ {comment}")
             elif entry.get("type") == 0:
-                comments.append(f"[{comid}]🔴 {comment}")
+                comments.append(f"[{comid}]ðŸ”´ {comment}")
         comments.reverse()
         
         # Create embeds for pagination
@@ -228,8 +236,8 @@ async def leaderboard_data():
 
     per_page = 14
     for i in range(0, len(leaderboard), per_page):
-        embed = discord.Embed(title="🏆 Reputation Leaderboard 🏆", color=discord.Color.gold())
-        embed_with_ids = discord.Embed(title="🏆 Reputation Leaderboard 🏆", color=discord.Color.gold())
+        embed = discord.Embed(title="ðŸ† Reputation Leaderboard ðŸ†", color=discord.Color.gold())
+        embed_with_ids = discord.Embed(title="ðŸ† Reputation Leaderboard ðŸ†", color=discord.Color.gold())
 
         for rank, (user_id, rep) in enumerate(leaderboard[i:i + per_page], start=i + 1):
             user = await bot.fetch_user(user_id)
@@ -259,8 +267,10 @@ async def rep_leaderboard(interaction: discord.Interaction, show_ids: bool = Fal
 
     if embeds:
         if show_ids:
+            view_with_ids.reset()
             view_with_ids.message = await interaction.followup.send(embed=embeds_with_ids[0], view=view_with_ids)
         else:
+            view.reset()
             view.message = await interaction.followup.send(embed=embeds[0], view=view)
     else:
         await interaction.followup.send("No reputation data available.")
