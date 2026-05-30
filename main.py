@@ -178,10 +178,11 @@ async def rep(interaction: discord.Interaction, user: discord.User = None):
             i += 1
             comment = entry.get("comment")
             comid = i
+            id_str = f"{comid}".rjust(4)  # pad to 4 char to keep emojis in line
             if entry.get("type") == 1:
-                comments.append(f"[{comid}]\U0001F7E2 {comment}")
+                comments.append(f"`{id_str}` \U0001F7E2 {comment}")
             elif entry.get("type") == 0:
-                comments.append(f"[{comid}]\U0001F534 {comment}")
+                comments.append(f"`{id_str}` \U0001F534 {comment}")
         comments.reverse()
         
         # Create embeds for pagination
