@@ -235,10 +235,14 @@ async def leaderboard_data():
     global embeds, embeds_with_ids
     embeds, embeds_with_ids = [], []
 
-    per_page = 14
+    per_page = 20
     for i in range(0, len(leaderboard), per_page):
         embed = discord.Embed(title="\U0001F3C6 Reputation Leaderboard \U0001F3C6", color=discord.Color.gold())
         embed_with_ids = discord.Embed(title="\U0001F3C6 Reputation Leaderboard \U0001F3C6", color=discord.Color.gold())
+
+        lines = []
+        lines_with_ids = []
+        medals = {1: "\U0001F947", 2: "\U0001F948", 3: "\U0001F949"}
 
         for rank, (user_id, rep) in enumerate(leaderboard[i:i + per_page], start=i + 1):
             try:
@@ -246,10 +250,13 @@ async def leaderboard_data():
                 username = user.name
             except:
                 username = f"Unknown ({user_id})"
-
-            embed_with_ids.add_field(name=f"#{rank} {username}", value=f"{rep} rep\n`{user_id}`", inline=False)
             
-            embed.add_field(name=f"#{rank} {username}", value=f"{rep} rep", inline=False)
+            prefix = medals.get(rank, f"`#{rank}`")
+            lines.append(f"{prefix} **{username}** — {rep} rep")
+            lines_with_ids.append(f"{prefix} **{username}** — {rep} rep\n`{user_id}`")
+
+        embed.description = "\n".join(lines)
+        embed_with_ids.description = "\n".join(lines_with_ids)
 
         embed_with_ids.set_footer(text=f"Page {i // per_page + 1}/{(len(leaderboard) - 1) // per_page + 1}")
         embed.set_footer(text=f"Page {i // per_page + 1}/{(len(leaderboard) - 1) // per_page + 1}")
