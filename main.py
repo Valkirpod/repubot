@@ -241,11 +241,15 @@ async def leaderboard_data():
         embed_with_ids = discord.Embed(title="\U0001F3C6 Reputation Leaderboard \U0001F3C6", color=discord.Color.gold())
 
         for rank, (user_id, rep) in enumerate(leaderboard[i:i + per_page], start=i + 1):
-            user = await bot.fetch_user(user_id)
+            try:
+                user = await bot.fetch_user(user_id)
+                username = user.name
+            except:
+                username = f"Unknown ({user_id})"
 
-            embed_with_ids.add_field(name=f"#{rank} {user.name}", value=f"{rep} rep\n`{user_id}`", inline=False)
+            embed_with_ids.add_field(name=f"#{rank} {username}", value=f"{rep} rep\n`{user_id}`", inline=False)
             
-            embed.add_field(name=f"#{rank} {user.name}", value=f"{rep} rep", inline=False)
+            embed.add_field(name=f"#{rank} {username}", value=f"{rep} rep", inline=False)
 
         embed_with_ids.set_footer(text=f"Page {i // per_page + 1}/{(len(leaderboard) - 1) // per_page + 1}")
         embed.set_footer(text=f"Page {i // per_page + 1}/{(len(leaderboard) - 1) // per_page + 1}")
@@ -314,6 +318,10 @@ async def on_ready():
 
 async def update_leaderboard():
      while True:
-          await leaderboard_data()
+         try:
+            await leaderboard_data()
+         except Exception as e:
+                print(f"Leaderboard update failed: {e}")
+                await asyncio.sleep(300)
 
 bot.run(os.getenv("DISCORD_BOT_TOKEN"))
