@@ -179,9 +179,9 @@ async def rep(interaction: discord.Interaction, user: discord.User = None):
             comment = entry.get("comment")
             comid = i
             if entry.get("type") == 1:
-                comments.append(f"[{comid}]ðŸŸ¢ {comment}")
+                comments.append(f"[{comid}]\U0001F7E2 {comment}")
             elif entry.get("type") == 0:
-                comments.append(f"[{comid}]ðŸ”´ {comment}")
+                comments.append(f"[{comid}]\U0001F534 {comment}")
         comments.reverse()
         
         # Create embeds for pagination
@@ -236,8 +236,8 @@ async def leaderboard_data():
 
     per_page = 14
     for i in range(0, len(leaderboard), per_page):
-        embed = discord.Embed(title="ðŸ† Reputation Leaderboard ðŸ†", color=discord.Color.gold())
-        embed_with_ids = discord.Embed(title="ðŸ† Reputation Leaderboard ðŸ†", color=discord.Color.gold())
+        embed = discord.Embed(title="\U0001F3C6 Reputation Leaderboard \U0001F3C6", color=discord.Color.gold())
+        embed_with_ids = discord.Embed(title="\U0001F3C6 Reputation Leaderboard \U0001F3C6", color=discord.Color.gold())
 
         for rank, (user_id, rep) in enumerate(leaderboard[i:i + per_page], start=i + 1):
             user = await bot.fetch_user(user_id)
