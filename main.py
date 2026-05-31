@@ -14,7 +14,7 @@ import asyncio
 from dotenv import load_dotenv
 load_dotenv()
 
-from user_manager.py import load_user, save_user, user_exists, all_user_files
+from user_manager import load_user, save_user, user_exists, all_user_files
 
 rep_cooldowns = {}  # {user_id: timestamp}
 
