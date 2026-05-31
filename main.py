@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-import json
 import os
 from discord import ui
 from discord.ui import View, Button
@@ -15,12 +14,11 @@ import asyncio
 from dotenv import load_dotenv
 load_dotenv()
 
+from user_manager.py import load_user, save_user, user_exists, all_user_files
+
 rep_cooldowns = {}  # {user_id: timestamp}
 
 bot = commands.Bot(command_prefix="/", intents=discord.Intents.default())
-
-if not os.path.exists("user_data"):
-    os.makedirs("user_data")
 
 
 class MyView(ui.View):
@@ -99,19 +97,12 @@ async def rep_plus(interaction: discord.Interaction, user: discord.User, comment
         await interaction.response.send_message("You can only use rep_plus and rep_minus once every 12 hours!", ephemeral=True)
         return
 
-    file_path = f"user_data/{user.id}.json"
-    
-    if os.path.exists(file_path):
-        with open(file_path, "r") as f:
-            user_data = json.load(f)
-    else:
-        user_data = {"comments": [], "reputation": 0}
+    user_data = load_user(user.id)
     
     user_data["comments"].append({"comment": comment, "type": 1, "author": interaction.user.name})
     user_data["reputation"] += 1
-    
-    with open(file_path, "w") as f:
-        json.dump(user_data, f, indent=4)
+
+    save_user(user.id, user_data)
     rep_cooldowns[interaction.user.id] = datetime.utcnow()
     
     embed = discord.Embed(title="Reputation Increased", description=f"**{user.name}** has received positive reputation!", color=discord.Color.green())
@@ -127,20 +118,13 @@ async def rep_min(interaction: discord.Interaction, user: discord.User, comment:
     if check_rep_cooldown(interaction.user.id):
         await interaction.response.send_message("You can only use rep_plus and rep_minus once every 12 hours!", ephemeral=True)
         return
-
-    file_path = f"user_data/{user.id}.json"
     
-    if os.path.exists(file_path):
-        with open(file_path, "r") as f:
-            user_data = json.load(f)
-    else:
-        user_data = {"comments": [], "reputation": 0}
+    user_data = load_user(user.id)
     
     user_data["comments"].append({"comment": comment, "type": 0, "author": interaction.user.name})
     user_data["reputation"] -= 1
-    
-    with open(file_path, "w") as f:
-        json.dump(user_data, f, indent=4)
+
+    save_user(user.id, user_data)
     rep_cooldowns[interaction.user.id] = datetime.utcnow()
     
     embed = discord.Embed(title="Reputation Decreased", description=f"**{user.name}** has received negative reputation!", color=discord.Color.red())
@@ -156,59 +140,55 @@ async def rep(interaction: discord.Interaction, user: discord.User = None):
     if user is None:
         user = interaction.user
     
-    file_path = f"user_data/{user.id}.json"
-    
-    # Check if the user has a data file
-    if os.path.exists(file_path):
-        with open(file_path, "r") as f:
-            user_data = json.load(f)
-        
-        # Count reputation
-        reputation = user_data["reputation"]
-        if reputation > 0:
-            embed_color = discord.Color.green()
-        elif reputation < 0:
-            embed_color = discord.Color.red()
-        else:
-            embed_color = discord.Color.greyple()
-        # Order and categorize comments
-        comments = []
-        i = 0
-        for entry in user_data.get("comments", []):
-            i += 1
-            comment = entry.get("comment")
-            comid = i
-            id_str = f"{comid}".rjust(4)  # pad to 4 char to keep emojis in line
-            if entry.get("type") == 1:
-                comments.append(f"`{id_str}` \U0001F7E2 {comment}")
-            elif entry.get("type") == 0:
-                comments.append(f"`{id_str}` \U0001F534 {comment}")
-        comments.reverse()
-        
-        # Create embeds for pagination
-        embeds = []
-        per_page = 14
-        for i in range(0, len(comments), per_page):
-            embed = Embed(
-                title=f"Reputation for {user.name}",
-                description=f"**Reputation: {reputation}**",
-                color=embed_color
-            )
-            embed.add_field(
-                name="Comments",
-                value="\n".join(comments[i:i + per_page]),
-                inline=False
-            )
-            embed.set_footer(text=f"Page {i // per_page + 1}/{(len(comments) - 1) // per_page + 1}")
-            embeds.append(embed)
-
-        if embeds:
-            view = Paginator(embeds)
-            view.message = await interaction.response.send_message(embed=embeds[0], view=view)
-        else:
-            await interaction.response.send_message(f"No reputation comments found for {user.name}.")
-    else:
+    if not user_exists(user.id):
         await interaction.response.send_message(f"No reputation data found for {user.name}.")
+        return
+    
+    user_data = load_user(user.id)
+    reputation = user_data["reputation"]
+
+    if reputation > 0:
+        embed_color = discord.Color.green()
+    elif reputation < 0:
+        embed_color = discord.Color.red()
+    else:
+        embed_color = discord.Color.greyple()
+    # Order and categorize comments
+    comments = []
+    i = 0
+    for entry in user_data.get("comments", []):
+        i += 1
+        comment = entry.get("comment")
+        comid = i
+        id_str = f"{comid}".rjust(4)  # pad to 4 char to keep emojis in line
+        if entry.get("type") == 1:
+            comments.append(f"`{id_str}` \U0001F7E2 {comment}")
+        elif entry.get("type") == 0:
+            comments.append(f"`{id_str}` \U0001F534 {comment}")
+    comments.reverse()
+    
+    # Create embeds for pagination
+    embeds = []
+    per_page = 14
+    for i in range(0, len(comments), per_page):
+        embed = Embed(
+            title=f"Reputation for {user.name}",
+            description=f"**Reputation: {reputation}**",
+            color=embed_color
+        )
+        embed.add_field(
+            name="Comments",
+            value="\n".join(comments[i:i + per_page]),
+            inline=False
+        )
+        embed.set_footer(text=f"Page {i // per_page + 1}/{(len(comments) - 1) // per_page + 1}")
+        embeds.append(embed)
+
+    if embeds:
+        view = Paginator(embeds)
+        view.message = await interaction.response.send_message(embed=embeds[0], view=view)
+    else:
+        await interaction.response.send_message(f"No reputation comments found for {user.name}.")
 
 async def leaderboard_data():
     """Generates leaderboard embed once every 5 minutes.
@@ -216,20 +196,11 @@ async def leaderboard_data():
     global update_status
     update_status = True
 
-    user_data_folder = "user_data/"
     leaderboard = []
-
-    # Read all user data files and collect reputations
-    for filename in os.listdir(user_data_folder):
-        if filename.endswith(".json"):
-            file_path = os.path.join(user_data_folder, filename)
-            with open(file_path, "r") as f:
-                data = json.load(f)
-            
-            user_id = filename.split(".json")[0]
-            reputation = data.get("reputation", 0)
-            leaderboard.append((int(user_id), reputation))
-
+    for user_id, data in all_user_files():
+        reputation = data.get("reputation", 0)
+        leaderboard.append((user_id, reputation))
+    
     leaderboard.sort(key=lambda x: x[1], reverse=True)
 
     global embeds, embeds_with_ids
@@ -291,14 +262,12 @@ async def rep_leaderboard(interaction: discord.Interaction, show_ids: bool = Fal
 @discord.app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 async def rep_delete(interaction: discord.Interaction, comment_id: int):
     user = interaction.user
-    file_path = f"user_data/{user.id}.json"
 
-    if not os.path.exists(file_path):
+    if not user_exists(user.id):
         await interaction.response.send_message(f"No reputation data found for {user.name}.", ephemeral=True)
         return
 
-    with open(file_path, "r") as f:
-        user_data = json.load(f)
+    user_data = load_user(user.id)
     comments = user_data.get("comments", [])
 
     if comment_id < 1 or comment_id > len(comments):
@@ -307,10 +276,7 @@ async def rep_delete(interaction: discord.Interaction, comment_id: int):
 
     # Delete the comment (1-based index)
     deleted_comment = comments.pop(comment_id - 1)  # Since JSON order is unchanged
-
-    # Save back to file
-    with open(file_path, "w") as f:
-        json.dump(user_data, f, indent=4)
+    save_user(user.id, user_data)
 
     await interaction.response.send_message(
         f"Deleted comment **[{comment_id}]** from {user.name}: `{deleted_comment['comment']}`",
