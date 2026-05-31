@@ -5,7 +5,7 @@ from discord.ui import View, Button
 from discord import Embed
 from discord import ButtonStyle
 
-from datetime import datetime, timedelta
+import datetime
 
 import asyncio
 
@@ -65,9 +65,9 @@ class Paginator(View):
 
 def check_rep_cooldown(user_id):
     """Returns True if the user is on cooldown, else False"""
-    cooldown_time = timedelta(hours=12)
-    last_used = rep_cooldowns.get(user_id, datetime.min)
-    return datetime.utcnow() - last_used < cooldown_time
+    cooldown_time = datetime.timedelta(hours=12)
+    last_used = rep_cooldowns.get(user_id, datetime.datetime.min.replace(tzinfo=datetime.UTC))
+    return datetime.datetime.now(datetime.UTC) - last_used < cooldown_time
 
 @bot.tree.command(name="rep_plus", description="Add a positive reputation comment to the user.")
 @discord.app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
@@ -85,7 +85,7 @@ async def rep_plus(interaction: discord.Interaction, user: discord.User, comment
     user_data["reputation"] += 1
 
     save_user(user.id, user_data)
-    rep_cooldowns[interaction.user.id] = datetime.now(datetime.UTC)
+    rep_cooldowns[interaction.user.id] = datetime.datetime.now(datetime.UTC)
     
     embed = discord.Embed(title="Reputation Increased", description=f"**{user.name}** has received positive reputation!", color=discord.Color.green())
     embed.add_field(name="Comment", value=comment)
@@ -107,7 +107,7 @@ async def rep_minus(interaction: discord.Interaction, user: discord.User, commen
     user_data["reputation"] -= 1
 
     save_user(user.id, user_data)
-    rep_cooldowns[interaction.user.id] = datetime.now(datetime.UTC)
+    rep_cooldowns[interaction.user.id] = datetime.datetime.now(datetime.UTC)
     
     embed = discord.Embed(title="Reputation Decreased", description=f"**{user.name}** has received negative reputation!", color=discord.Color.red())
     embed.add_field(name="Comment", value=comment)
