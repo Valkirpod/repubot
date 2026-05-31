@@ -85,7 +85,7 @@ async def rep_plus(interaction: discord.Interaction, user: discord.User, comment
     user_data["reputation"] += 1
 
     save_user(user.id, user_data)
-    rep_cooldowns[interaction.user.id] = datetime.utcnow()
+    rep_cooldowns[interaction.user.id] = datetime.now(datetime.UTC)
     
     embed = discord.Embed(title="Reputation Increased", description=f"**{user.name}** has received positive reputation!", color=discord.Color.green())
     embed.add_field(name="Comment", value=comment)
@@ -107,7 +107,7 @@ async def rep_minus(interaction: discord.Interaction, user: discord.User, commen
     user_data["reputation"] -= 1
 
     save_user(user.id, user_data)
-    rep_cooldowns[interaction.user.id] = datetime.utcnow()
+    rep_cooldowns[interaction.user.id] = datetime.now(datetime.UTC)
     
     embed = discord.Embed(title="Reputation Decreased", description=f"**{user.name}** has received negative reputation!", color=discord.Color.red())
     embed.add_field(name="Comment", value=comment)
