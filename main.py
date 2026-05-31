@@ -1,12 +1,10 @@
 import discord
 from discord.ext import commands
 import os
-from discord import ui
 from discord.ui import View, Button
-from discord import Embed, Interaction
+from discord import Embed
 from discord import ButtonStyle
 
-from discord.app_commands import CommandOnCooldown
 from datetime import datetime, timedelta
 
 import asyncio
@@ -20,37 +18,21 @@ rep_cooldowns = {}  # {user_id: timestamp}
 
 bot = commands.Bot(command_prefix="/", intents=discord.Intents.default())
 
-
-class MyView(ui.View):
-    @ui.button(label="Previous", style=ButtonStyle.primary)
-    async def previous_button(self, interaction: discord.Interaction, button: ui.Button):
-        # Your code for the previous button
-        pass
-
-    @ui.button(label="Next", style=ButtonStyle.primary)
-    async def next_button(self, interaction: discord.Interaction, button: ui.Button):
-        # Your code for the next button
-        pass
-
 class Paginator(View):
     def __init__(self, embeds):
         super().__init__(timeout=300)
         self.embeds = embeds
         self.current_page = 0
 
-        # Previous and Next Buttons
         self.previous_button = Button(label="Previous", style=ButtonStyle.primary)
         self.next_button = Button(label="Next", style=ButtonStyle.primary)
         
-        # Assign callbacks
         self.previous_button.callback = self.previous_page
         self.next_button.callback = self.next_page
         
-        # Add buttons to the view
         self.add_item(self.previous_button)
         self.add_item(self.next_button)
         
-        # Update the button state
         self.update_button_state()
 
     async def previous_page(self, interaction: discord.Interaction):
@@ -111,7 +93,7 @@ async def rep_plus(interaction: discord.Interaction, user: discord.User, comment
 
 @bot.tree.command(name="rep_minus", description="Add a negative reputation comment to the user.")
 @discord.app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-async def rep_min(interaction: discord.Interaction, user: discord.User, comment: str):
+async def rep_minus(interaction: discord.Interaction, user: discord.User, comment: str):
     if user == interaction.user:
         await interaction.response.send_message("You can't add comments to yourself!", ephemeral=True)
         return
@@ -131,12 +113,11 @@ async def rep_min(interaction: discord.Interaction, user: discord.User, comment:
     embed.add_field(name="Comment", value=comment)
     await interaction.response.send_message(embed=embed)
 
-    # Send the response with an embed
     await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name="rep_show", description="See all reputation comments for a user, or yourself (if none specified).")
 @discord.app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-async def rep(interaction: discord.Interaction, user: discord.User = None):
+async def rep_show(interaction: discord.Interaction, user: discord.User = None):
     if user is None:
         user = interaction.user
     
@@ -153,7 +134,7 @@ async def rep(interaction: discord.Interaction, user: discord.User = None):
         embed_color = discord.Color.red()
     else:
         embed_color = discord.Color.greyple()
-    # Order and categorize comments
+    
     comments = []
     i = 0
     for entry in user_data.get("comments", []):
@@ -167,7 +148,6 @@ async def rep(interaction: discord.Interaction, user: discord.User = None):
             comments.append(f"`{id_str}` \U0001F534 {comment}")
     comments.reverse()
     
-    # Create embeds for pagination
     embeds = []
     per_page = 14
     for i in range(0, len(comments), per_page):
@@ -207,13 +187,13 @@ async def leaderboard_data():
     embeds, embeds_with_ids = [], []
 
     per_page = 20
+    medals = {1: "\U0001F947", 2: "\U0001F948", 3: "\U0001F949"}
     for i in range(0, len(leaderboard), per_page):
         embed = discord.Embed(title="\U0001F3C6 Reputation Leaderboard \U0001F3C6", color=discord.Color.gold())
         embed_with_ids = discord.Embed(title="\U0001F3C6 Reputation Leaderboard \U0001F3C6", color=discord.Color.gold())
 
         lines = []
         lines_with_ids = []
-        medals = {1: "\U0001F947", 2: "\U0001F948", 3: "\U0001F949"}
 
         for rank, (user_id, rep) in enumerate(leaderboard[i:i + per_page], start=i + 1):
             try:
@@ -241,11 +221,11 @@ async def leaderboard_data():
 
     update_status = False
 
-    await asyncio.sleep(300) # 5 minutes
+    await asyncio.sleep(300)
 
 @bot.tree.command(name="leaderboard", description="See the top users with the highest reputation.")
 @discord.app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-async def rep_leaderboard(interaction: discord.Interaction, show_ids: bool = False):
+async def leaderboard(interaction: discord.Interaction, show_ids: bool = False):
     await interaction.response.defer()
 
     if embeds:
@@ -274,8 +254,7 @@ async def rep_delete(interaction: discord.Interaction, comment_id: int):
         await interaction.response.send_message(f"Invalid comment ID. {user.name} has {len(comments)} comments.", ephemeral=True)
         return
 
-    # Delete the comment (1-based index)
-    deleted_comment = comments.pop(comment_id - 1)  # Since JSON order is unchanged
+    deleted_comment = comments.pop(comment_id - 1)
     save_user(user.id, user_data)
 
     await interaction.response.send_message(
