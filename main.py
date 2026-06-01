@@ -131,7 +131,9 @@ async def rep_show(interaction: discord.Interaction, user: discord.User = None):
     
     user_data = load_user(user.id)
     reputation = user_data["reputation"]
-    streak = streak.get_streak(user.id).current_streak
+    streak_data = streak.get_streak(user.id)
+    current_streak = streak_data.current_streak
+    max_streak = streak_data.current_streak
 
     if reputation > 0:
         embed_color = discord.Color.green()
@@ -158,7 +160,7 @@ async def rep_show(interaction: discord.Interaction, user: discord.User = None):
     for i in range(0, len(comments), per_page):
         embed = Embed(
             title=f"Reputation for {user.name}",
-            description=f"\U00002B50 **Reputation: {reputation}**\n \U0001f525 **Streak: {streak}**",
+            description=f"\U00002B50 **Reputation: {reputation}**\n \U0001f525 **Streak: {current_streak}**\n \U0001F525 **Max streak: {max_streak}**",
             color=embed_color
         )
         embed.add_field(

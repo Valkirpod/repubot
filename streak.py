@@ -8,18 +8,21 @@ from user_manager import load_user, save_user
 @dataclass
 class StreakData:
     current_streak: int
+    max_streak: int
     last_claimed: datetime.datetime
 
     @staticmethod
     def from_dict(data):
         return StreakData(
             current_streak=data["current_streak"],
+            max_streak=data["max_streak"],
             last_claimed=datetime.datetime.fromisoformat(data["last_claimed"])
         )
 
     def to_dict(self):
         return {
             "current_streak": self.current_streak,
+            "max_streak": self.max_streak,
             "last_claimed": self.last_claimed.isoformat()
         }
 
@@ -30,6 +33,7 @@ def get_streak(user_id):
     if "streak" not in user_data:
         return StreakData(
             current_streak=0,
+            max_streak=0,
             last_claimed=datetime.datetime.min.replace(tzinfo=datetime.UTC)
         )
     
@@ -53,11 +57,13 @@ def write_streak(user_id, streak):
     save_user(user_id, user_data)
 
 def update_streak(user_id):
-    """Resets streak if it has expired"""
+    """Checks if current streak is a max streak and resets streak if it has expired"""
+    streak = get_streak(user_id)
+    if streak.current_streak > streak.max_streak:
+        streak.max_streak = streak.current_streak
     if check_streak_expiration(user_id):
-        streak = get_streak(user_id)
         streak.current_streak = 0
-        write_streak(user_id, streak)
+    write_streak(user_id, streak)
 
 def increase_streak(user_id):
     """Increases streak if it's not on cooldown"""

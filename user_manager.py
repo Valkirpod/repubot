@@ -20,6 +20,7 @@ def load_user(user_id):
         "reputation": 0,
         "streak": {
             "current_streak": 0,
+            "max_streak": 0,
             "last_claimed": datetime.datetime.min.replace(tzinfo=datetime.UTC).isoformat()
         }
     }
