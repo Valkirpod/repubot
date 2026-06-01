@@ -160,7 +160,7 @@ async def rep_show(interaction: discord.Interaction, user: discord.User = None):
     for i in range(0, len(comments), per_page):
         embed = Embed(
             title=f"Reputation for {user.name}",
-            description=f"\U00002B50 **Reputation: {reputation}**\n \U0001f525 **Streak: {current_streak}**\n \U0001F525 **Max streak: {max_streak}**",
+            description=f"\U00002B50 **Reputation: {reputation}**\n \U0001f525 **Streak: {current_streak}**\n \u2764\ufe0f\u200d\U0001F525 **Max streak: {max_streak}**",
             color=embed_color
         )
         embed.add_field(
