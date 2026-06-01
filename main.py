@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from user_manager import load_user, save_user, user_exists, all_user_files
+import streak
 
 rep_cooldowns = {}  # {user_id: timestamp}
 
@@ -90,6 +91,7 @@ async def rep_plus(interaction: discord.Interaction, user: discord.User, comment
     embed = discord.Embed(title="Reputation Increased", description=f"**{user.name}** has received positive reputation!", color=discord.Color.green())
     embed.add_field(name="Comment", value=comment)
     await interaction.response.send_message(embed=embed)
+    await streak.handle_streak(interaction, interaction.user.id)
 
 @bot.tree.command(name="rep_minus", description="Add a negative reputation comment to the user.")
 @discord.app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
@@ -112,8 +114,7 @@ async def rep_minus(interaction: discord.Interaction, user: discord.User, commen
     embed = discord.Embed(title="Reputation Decreased", description=f"**{user.name}** has received negative reputation!", color=discord.Color.red())
     embed.add_field(name="Comment", value=comment)
     await interaction.response.send_message(embed=embed)
-
-    await interaction.response.send_message(embed=embed)
+    await streak.handle_streak(interaction, interaction.user.id)
 
 @bot.tree.command(name="rep_show", description="See all reputation comments for a user, or yourself (if none specified).")
 @discord.app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
@@ -125,8 +126,12 @@ async def rep_show(interaction: discord.Interaction, user: discord.User = None):
         await interaction.response.send_message(f"No reputation data found for {user.name}.")
         return
     
+    # Make sure that relevant streak count is shown
+    streak.update_streak(user.id)
+    
     user_data = load_user(user.id)
     reputation = user_data["reputation"]
+    streak = streak.get_streak(user.id).current_streak
 
     if reputation > 0:
         embed_color = discord.Color.green()
@@ -153,7 +158,7 @@ async def rep_show(interaction: discord.Interaction, user: discord.User = None):
     for i in range(0, len(comments), per_page):
         embed = Embed(
             title=f"Reputation for {user.name}",
-            description=f"**Reputation: {reputation}**",
+            description=f"\U00002B50 **Reputation: {reputation}**\n \U0001f525 **Streak: {streak}**",
             color=embed_color
         )
         embed.add_field(
