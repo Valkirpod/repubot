@@ -136,16 +136,29 @@ async def rep_show(interaction: discord.Interaction, user: discord.User = None):
     streak_data = streak.get_streak(user.id)
     current_streak = streak_data.current_streak
     max_streak = streak_data.current_streak
-
-    if reputation > 0:
-        embed_color = discord.Color.green()
-    elif reputation < 0:
-        embed_color = discord.Color.red()
-    else:
-        embed_color = discord.Color.greyple()
     
     top_tags = user_data.get("top_tags", [])
-    tags_text = " | ".join(f"`{tag}`" for tag in top_tags) if top_tags else "No tags."
+
+    description = f"\U00002B50 **Reputation:** {reputation}"
+
+    if current_streak > 0 or max_streak > 0:
+        if current_streak == max_streak:
+            description += f"\n\n\u2764\ufe0f\u200d\U0001F525 **Streak:** {current_streak}"
+        elif current_streak < max_streak:
+            description += f"\n\n\U0001f525 **Streak:** {current_streak}"
+            description += f"\n\u2764\ufe0f\u200d\U0001F525 **Best Streak:** {max_streak}"
+
+    if top_tags:
+        tags_text = " | ".join(f"`#{tag}`" for tag in top_tags)
+        description += f"\n\n\U0001F3F7 {tags_text}"
+
+    embedMain = Embed(
+        title=f"Reputation for {user.name}",
+        description=description,
+        color=discord.Color.green() if reputation > 0 else 
+              discord.Color.red() if reputation < 0 else 
+              discord.Color.greyple()
+    )
 
     comments = []
     i = 0
@@ -163,14 +176,7 @@ async def rep_show(interaction: discord.Interaction, user: discord.User = None):
     embeds = []
     per_page = 14
     for i in range(0, len(comments), per_page):
-        embed = Embed(
-            title=f"Reputation for {user.name}",
-            description=f"\U00002B50 **Reputation: {reputation}**\n"
-                        f"\U0001f525 **Streak: {current_streak}**\n"
-                        f"\u2764\ufe0f\u200d\U0001F525 **Max streak: {max_streak}**\n"
-                        f"\u0023\uFE0F\u20E3 {tags_text}",
-            color=embed_color
-        )
+        embed = embedMain.copy()
         embed.add_field(
             name="Comments",
             value="\n".join(comments[i:i + per_page]),
