@@ -12,7 +12,7 @@ import asyncio
 from dotenv import load_dotenv
 load_dotenv()
 
-from user_manager import load_user, save_user, user_exists, all_user_files
+from user_manager import load_user, save_user, user_exists, all_user_files, update_tags
 import streak
 
 rep_cooldowns = {}  # {user_id: timestamp}
@@ -87,6 +87,7 @@ async def rep_plus(interaction: discord.Interaction, user: discord.User, comment
 
     save_user(user.id, user_data)
     rep_cooldowns[interaction.user.id] = datetime.datetime.now(datetime.UTC)
+    update_tags(user.id)
     
     embed = discord.Embed(title="Reputation Increased", description=f"**{user.name}** has received positive reputation!", color=discord.Color.green())
     embed.add_field(name="Comment", value=comment)
@@ -110,6 +111,7 @@ async def rep_minus(interaction: discord.Interaction, user: discord.User, commen
 
     save_user(user.id, user_data)
     rep_cooldowns[interaction.user.id] = datetime.datetime.now(datetime.UTC)
+    update_tags(user.id)
     
     embed = discord.Embed(title="Reputation Decreased", description=f"**{user.name}** has received negative reputation!", color=discord.Color.red())
     embed.add_field(name="Comment", value=comment)
@@ -142,6 +144,9 @@ async def rep_show(interaction: discord.Interaction, user: discord.User = None):
     else:
         embed_color = discord.Color.greyple()
     
+    top_tags = user_data.get("top_tags", [])
+    tags_text = " | ".join(f"`{tag}`" for tag in top_tags) if top_tags else "No tags."
+
     comments = []
     i = 0
     for entry in user_data.get("comments", []):
@@ -160,7 +165,10 @@ async def rep_show(interaction: discord.Interaction, user: discord.User = None):
     for i in range(0, len(comments), per_page):
         embed = Embed(
             title=f"Reputation for {user.name}",
-            description=f"\U00002B50 **Reputation: {reputation}**\n \U0001f525 **Streak: {current_streak}**\n \u2764\ufe0f\u200d\U0001F525 **Max streak: {max_streak}**",
+            description=f"\U00002B50 **Reputation: {reputation}**\n"
+                        f"\U0001f525 **Streak: {current_streak}**\n"
+                        f"\u2764\ufe0f\u200d\U0001F525 **Max streak: {max_streak}**\n"
+                        f"\u0023\uFE0F\u20E3 {tags_text}",
             color=embed_color
         )
         embed.add_field(
