@@ -1,5 +1,6 @@
 import json
 import os
+import datetime
 
 USER_DATA_FOLDER = "user_data"
 
@@ -14,7 +15,15 @@ def load_user(user_id):
     if os.path.exists(path):
         with open(path, "r") as f:
             return json.load(f)
-    return {"comments": [], "reputation": 0}
+    return {
+        "comments": [],
+        "reputation": 0,
+        "streak": {
+            "current_streak": 0,
+            "max_streak": 0,
+            "last_claimed": datetime.datetime.min.replace(tzinfo=datetime.UTC).isoformat()
+        }
+    }
 
 def save_user(user_id, data):
     path = get_user_path(user_id)
