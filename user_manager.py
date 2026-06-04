@@ -61,7 +61,7 @@ def _get_tags(comments: list, limit: int = 8):
     
     top_tags = word_counts.most_common(limit)
     
-    return [word for word in top_tags]
+    return [word for word, _ in top_tags]
 
 
 def update_tags(user_id):
