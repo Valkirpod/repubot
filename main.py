@@ -135,7 +135,7 @@ async def rep_show(interaction: discord.Interaction, user: discord.User = None):
     reputation = user_data["reputation"]
     streak_data = streak.get_streak(user.id)
     current_streak = streak_data.current_streak
-    max_streak = streak_data.current_streak
+    max_streak = streak_data.max_streak
     
     top_tags = user_data.get("top_tags", [])
 
@@ -147,10 +147,12 @@ async def rep_show(interaction: discord.Interaction, user: discord.User = None):
         elif current_streak < max_streak:
             description += f"\n\n\U0001f525 **Streak:** {current_streak}"
             description += f"\n\u2764\ufe0f\u200d\U0001F525 **Best Streak:** {max_streak}"
-
+    
     if top_tags:
         tags_text = " | ".join(f"`#{tag}`" for tag in top_tags)
         description += f"\n\n\U0001F3F7 {tags_text}"
+
+
 
     embedMain = Embed(
         title=f"Reputation for {user.name}",
